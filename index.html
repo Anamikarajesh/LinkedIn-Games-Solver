@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LinkedIn Games Solver</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    body{
+      background:#0a0a15;
+      min-height:100vh;
+      margin:0;
+      font-family:'Segoe UI',system-ui,sans-serif;
+      color:#ffffff;
+    }
+    .container{
+      max-width:1000px;
+      margin:0 auto;
+      padding:40px 20px;
+    }
+    h1{
+      text-align:center;
+      font-size:3rem;
+      font-weight:700;
+      color:#ffcc00;
+      margin-bottom:12px;
+      letter-spacing:-1px;
+      text-shadow:0 0 30px rgba(255,204,0,0.6);
+    }
+    .container > p{
+      text-align:center;
+      color:#ffffff;
+      font-size:1.1rem;
+      margin-bottom:48px;
+    }
+    .menu{
+      display:flex;
+      flex-direction:column;
+      gap:24px;
+      align-items:center;
+    }
+    .games{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+      gap:24px;
+      width:100%;
+      max-width:800px;
+    }
+    .game-card{
+      position:relative;
+      padding:32px 24px;
+      border-radius:12px;
+      background:#1a1a2e;
+      border:3px solid #4a4aff;
+      text-align:center;
+      cursor:pointer;
+      transition:all 0.2s ease;
+      text-decoration:none;
+      color:inherit;
+      display:block;
+    }
+    .game-card:hover{
+      transform:translateY(-6px);
+      border-color:#ffcc00;
+      box-shadow:0 15px 40px rgba(74,74,255,0.5);
+      color:inherit;
+      text-shadow:none;
+    }
+    .game-card:hover h2{
+      color:#ffcc00;
+      text-shadow:none;
+    }
+    .game-card:hover p{
+      color:#ffffff;
+      text-shadow:none;
+    }
+    .game-card:active{
+      transform:translateY(-2px);
+    }
+    .game-card h2{
+      position:relative;
+      margin:0 0 12px;
+      font-size:1.5rem;
+      font-weight:700;
+      color:#ffcc00;
+    }
+    .game-card p{
+      position:relative;
+      margin:0;
+      color:#ffffff;
+      font-size:0.95rem;
+      line-height:1.5;
+    }
+    .game-card.available{
+      background:#1a1a2e;
+      border-color:#4a4aff;
+    }
+    .game-card.available:hover{
+      border-color:#ffcc00;
+    }
+    .game-card.coming-soon{
+      opacity:0.5;
+      border-color:#3a3a5a;
+    }
+    .game-card.coming-soon:hover{
+      transform:translateY(-3px);
+      border-color:#5a5a7a;
+    }
+    .menu > p{
+      color:#ffffff;
+      font-size:0.9rem;
+      margin-top:8px;
+    }
+    footer{
+      margin-top:60px;
+      text-align:center;
+    }
+    footer small{
+      color:#ffffff;
+      font-size:0.85rem;
+    }
+    @media(max-width:640px){
+      h1{font-size:2.2rem}
+      .games{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>LinkedIn Games Solver</h1>
+    <p>Choose a game to open the AI-powered solver assistant</p>
+
+    <div class="menu">
+      <div class="games">
+        <a class="game-card available" href="mini.html">
+          <h2>Mini Sudoku</h2>
+          <p>6×6 LinkedIn mini-sudoku solver with AI hints & step-by-step visualization</p>
+        </a>
+
+        <div class="game-card coming-soon" onclick="alert('Queens solver coming soon!')">
+          <h2>Queens</h2>
+          <p>Place queens without conflicts using CSP solver</p>
+        </div>
+
+        <div class="game-card coming-soon" onclick="alert('Tango solver coming soon!')">
+          <h2>Tango</h2>
+          <p>Puzzle solver for Tango with hint system</p>
+        </div>
+
+        <div class="game-card coming-soon" onclick="alert('Zip solver coming soon!')">
+          <h2>Zip</h2>
+          <p>Zip puzzle assistant with step visualization</p>
+        </div>
+      </div>
+
+    </div>
+
+    <footer>
+      <small>AI-Powered LinkedIn Games Solver • Built with CSP & Backtracking</small>
+    </footer>
+  </div>
+
+</body>
+</html>

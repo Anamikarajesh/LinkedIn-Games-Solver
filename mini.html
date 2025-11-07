@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mini Sudoku — LinkedIn Games Solver</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <p><a href="index.html">◀ Back to LinkedIn Games Solver</a></p>
+    <h1>Mini Sudoku — AI Solver (6×6)</h1>
+
+    <div class="game">
+      <div id="grid" class="grid"></div>
+
+      <div class="controls">
+        <div class="pad">
+          <button data-num="1">1</button>
+          <button data-num="2">2</button>
+          <button data-num="3">3</button>
+          <button data-num="4">4</button>
+          <button data-num="5">5</button>
+          <button data-num="6">6</button>
+          <button id="clearCell">X</button>
+        </div>
+
+        <div class="actions">
+          <button id="hintBtn">Hint (AI)</button>
+          <button id="solveBtn">Solve (AI)</button>
+          <button id="resetBtn">Clear</button>
+          <button id="newGameBtn">New Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="panel">
+        <h3>AI Progress</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <footer>
+      <small>Solver uses a CSP backtracking search with MRV and forward-checking. Shows internal events (node entered, tried value, backtrack).</small>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+  
+</body>
+</html>
