@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tango — Sun & Moon (Pyodide)</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Extras to work alongside your provided grid/cell CSS */
+    .board-wrap{ position:relative; display:inline-block; }
+    #connectors{ position:absolute; inset:0; pointer-events:none; }
+    .conn{ position:absolute; font-size:18px; opacity:.9; filter:drop-shadow(0 1px 1px rgba(0,0,0,.6)); }
+    .conn.eq{ color:#22d3ee; }   /* '=' */
+    .conn.op{ color:#fbbf24; }   /* '×' */
+    .invalid{ outline:2px solid #ef4444 !important; box-shadow: inset 0 0 0 2px #ef4444 !important; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <p><a href="index.html">◀ Back</a></p>
+    <h1>Tango — Sun & Moon (6×6)</h1>
+
+    <div class="game">
+      <div class="board-wrap">
+        <div id="grid" class="grid"></div>
+        <div id="connectors"></div>
+      </div>
+
+      <div class="controls">
+        <div class="pad" id="pad">
+          <button data-sym="1">☀️</button>
+          <button data-sym="0">🌙</button>
+          <button id="clearCell">X</button>
+        </div>
+
+        <div class="actions">
+          <button id="hintBtn" disabled>Hint (AI)</button>
+          <button id="solveBtn" disabled>Solve (AI)</button>
+          <button id="resetBtn">Clear</button>
+          <button id="randomBtn">Random Puzzle</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="info">
+      <div class="panel">
+        <h3>Constraints</h3>
+        <div class="legend">
+          • No three same symbols in a row/column.<br/>
+          • Balance: each row/column has exactly three ☀️ and three 🌙.<br/>
+          • <strong>=</strong> means same, <strong>×</strong> means opposite.
+        </div>
+        <div class="ineq-list">
+          <div><strong>Equal (=)</strong>: <span id="eqList"></span></div>
+          <div><strong>Opposite (×)</strong>: <span id="opList"></span></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>AI Progress</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+
+    <footer>
+      <small>Python (Pyodide) • Backtracking + MRV + forward checks.</small>
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  <script src="tango_sunmoon.js"></script>
+</body>
+</html>
