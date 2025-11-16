@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zip — Enhanced Puzzle Solver</title>
+  <style>
+    :root{--bg:#0a0a15;--card:#1a1a2e;--accent:#4a4aff;--accent2:#ffcc00}
+    *{box-sizing:border-box;font-family:'Segoe UI',system-ui,-apple-system,Roboto,'Helvetica Neue',Arial}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#06060a,#171723);color:#fff;padding:20px}
+    .container{max-width:1200px;margin:0 auto}
+    h1{font-size:2rem;margin:8px 0 20px;color:var(--accent2);display:flex;align-items:center;gap:12px}
+    .game{display:flex;gap:24px;align-items:flex-start}
+    .board-wrap{background:var(--card);padding:18px;border-radius:12px;border:3px solid var(--accent);box-shadow:0 8px 32px rgba(0,0,0,0.5)}
+    .grid{display:grid;gap:2px;background:rgba(255,255,255,0.05);padding:2px}
+    .cell{width:56px;height:56px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.15);cursor:pointer;position:relative;font-weight:700;font-size:18px;background:rgba(10,10,20,0.9);color:#fff;transition:all 0.15s;user-select:none}
+    .cell:hover{background:rgba(255,255,255,0.1);transform:scale(1.05)}
+    .cell.given{background:rgba(74,74,255,0.25)!important;font-size:22px;font-weight:900;border:2px solid rgba(74,74,255,0.6)}
+    .cell.visited{background:rgba(74,255,74,0.4)!important}
+    .cell.solved{font-size:18px;color:#000;font-weight:700}
+    .cell.highlighted{background:rgba(255,165,0,0.6)!important}
+    .cell.connected{background:rgba(255,140,0,0.85)!important;border-color:rgba(255,165,0,0.9)}
+    .controls{min-width:320px}
+    .instruction{background:rgba(74,74,255,0.15);padding:16px;border-radius:8px;margin-bottom:18px;border-left:4px solid var(--accent);line-height:1.7;font-size:0.9rem}
+    .instruction strong{color:var(--accent2)}
+    .instruction ul{margin:8px 0;padding-left:20px}
+    .instruction li{margin:4px 0}
+    .actions{display:flex;flex-direction:column;gap:10px}
+    button{padding:14px 18px;border-radius:8px;border:none;background:linear-gradient(135deg,#5b6bff,#8b9eff);color:#fff;font-weight:700;cursor:pointer;font-size:14px;transition:all 0.2s;display:flex;align-items:center;gap:10px;justify-content:center}
+    button:hover{background:linear-gradient(135deg,#6b7bff,#9bafff);transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,74,255,0.5)}
+    button:active{transform:translateY(0)}
+    button.secondary{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15)}
+    button.secondary:hover{background:rgba(255,255,255,0.15)}
+    .log{margin-top:12px;background:rgba(0,0,0,0.3);padding:12px;border-radius:8px;max-height:180px;font-family:'Consolas',monospace;font-size:12px;overflow:auto;border:1px solid rgba(255,255,255,0.05)}
+    .log-entry{padding:3px 0;color:rgba(255,255,255,0.8)}
+    label{display:block;margin-bottom:8px;font-weight:600;color:rgba(255,255,255,0.9);font-size:0.9rem}
+    input[type=number],input[type=text]{width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:14px;margin-bottom:10px}
+    .input-group{display:flex;gap:10px;align-items:flex-end}
+    .input-group>div{flex:1}
+    @media(max-width:900px){.game{flex-direction:column}.controls{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧩 Zip — Enhanced Puzzle Solver</h1>
+    
+    <div class="game">
+      <div class="board-wrap">
+        <div id="grid" class="grid"></div>
+      </div>
+
+      <div class="controls">
+        <div class="instruction">
+          <strong>📋 How to play:</strong>
+          <ul>
+            <li><strong>Click any cell</strong> to place/cycle numbers (or press Backspace to remove)</li>
+            <li><strong>Click and drag</strong> from number 1 to create a path</li>
+            <li>Path must connect <strong>all consecutive numbers</strong> (1→2→3→...)</li>
+            <li>Path must <strong>fill the entire grid</strong></li>
+            <li>Only <strong>orthogonal moves</strong> (up/down/left/right)</li>
+            <li>Connect all numbers to win! 🎉</li>
+          </ul>
+        </div>
+
+        <div class="actions">
+          <button id="solveBtn">🎯 Auto Solve</button>
+          <button id="animateBtn" class="secondary">⏭️ Solve (Animated)</button>
+          <button id="undoBtn" class="secondary">↩️ Undo Move</button>
+          <button id="demoBtn" class="secondary">🎲 Load Demo</button>
+          <button id="resetBtn" class="secondary">🗑️ Clear All</button>
+        </div>
+
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ========== ZIP SOLVER (Pure JS) ========== */
+    
+    function compressSequence(sequence) {
+      const result = [];
+      if (sequence.length === 0) return result;
+      result.push(sequence[0]);
+      let i = 1;
+      while (i < sequence.length) {
+        const runStart = i - 1;
+        let diff = sequence[i] - sequence[runStart];
+        while (i + 1 < sequence.length && sequence[i + 1] - sequence[i] === diff) i++;
+        result.push(sequence[i]);
+        i++;
+      }
+      return result;
+    }
+
+    class ZipGrid {
+      #m; #n; #size; #head; #foot; #current; #path; #visitedCells; #degreeModifications; #cellStatuses;
+      
+      constructor(m, n, numberedCells, downWalls, rightWalls) {
+        this.#m = m; this.#n = n; this.#size = m * n;
+        this.#head = numberedCells[0];
+        this.#foot = numberedCells[numberedCells.length - 1];
+        this.#current = 1;
+        this.#path = new Array(this.#size).fill(-1);
+        this.#path[0] = this.#head;
+        this.#visitedCells = 1;
+        this.#degreeModifications = Array.from({length: this.#size - 1}, () => []);
+        this.#constructCellStatuses(m, n, this.#size, numberedCells, downWalls, rightWalls);
+        this.#setVisited(this.#head, true);
+      }
+
+      #constructCellStatuses(m, n, size, numberedCells, downWalls, rightWalls) {
+        this.#cellStatuses = new Array(size).fill(4 << 1);
+        for (let i = 0; i < n; i++) { this.#decrementDegree(i); this.#decrementDegree(size - n + i); }
+        for (let i = 0; i < m; i++) { this.#decrementDegree(n * i); this.#decrementDegree(n * i + n - 1); }
+        for (const walledCell of downWalls) { this.#addDownWall(walledCell); this.#decrementDegree(walledCell); if (walledCell < size - n) this.#decrementDegree(walledCell + n); }
+        for (const walledCell of rightWalls) { this.#addRightWall(walledCell); this.#decrementDegree(walledCell); if (walledCell % n !== n - 1) this.#decrementDegree(walledCell + 1); }
+        for (let i = 0; i < numberedCells.length; i++) this.#label(numberedCells[i], i + 1);
+      }
+
+      solve() {
+        let callStack = []; let path;
+        this.#stackPushValidMoves(callStack, this.#head);
+        while (callStack.length !== 0) {
+          const [from, to, doVisit] = callStack.pop();
+          while (this.lastMove() !== from) this.unvisit();
+          doVisit.call(this, to, from);
+          if (this.#visitedCells === this.#size) { path = [...this.#path]; break; }
+          this.#stackPushValidMoves(callStack, to);
+        }
+        while (this.#visitedCells > 1) this.unvisit();
+        if (!path) throw new Error("No solutions found");
+        return path;
+      }
+
+      #stackPushValidMoves(stack, from) {
+        if (this.canVisitRight()) stack.push([from, from + 1, this.#doVisitRight]);
+        if (this.canVisitLeft()) stack.push([from, from - 1, this.#doVisitLeft]);
+        if (this.canVisitDown()) stack.push([from, from + this.#n, this.#doVisitDown]);
+        if (this.canVisitUp()) stack.push([from, from - this.#n, this.#doVisitUp]);
+      }
+
+      canVisitUp() { return this.#canVisitDirection(s => s - this.#n, (d,s)=> d>=0, (ds,ss)=> this.maskHasDownWall(ds), [this.#visitIsolatesDown, this.#visitIsolatesLeft, this.#visitIsolatesRight]); }
+      canVisitDown() { return this.#canVisitDirection(s => s + this.#n, (d,s)=> d < this.#size, (ds,ss)=> this.maskHasDownWall(ss), [this.#visitIsolatesUp, this.#visitIsolatesLeft, this.#visitIsolatesRight]); }
+      canVisitLeft() { return this.#canVisitDirection(s => s - 1, (d,s)=> s % this.#n !== 0, (ds,ss)=> this.maskHasRightWall(ds), [this.#visitIsolatesUp, this.#visitIsolatesDown, this.#visitIsolatesRight]); }
+      canVisitRight() { return this.#canVisitDirection(s => s + 1, (d,s)=> s % this.#n !== this.#n - 1, (ds,ss)=> this.maskHasRightWall(ss), [this.#visitIsolatesUp, this.#visitIsolatesDown, this.#visitIsolatesLeft]); }
+
+      #canVisitDirection(computeDst, checkDstSrcBounds, checkDstSrcWall, willIsolateFns) {
+        const src = this.lastMove(); const dst = computeDst.call(this, src);
+        const dstStatus = this.#cellStatuses[dst]; const srcStatus = this.#cellStatuses[src];
+        let withoutIsolation = checkDstSrcBounds.call(this, dst, src) && !this.maskIsVisited(dstStatus) && !checkDstSrcWall.call(this, dstStatus, srcStatus) && !(this.getMaskLabel(dstStatus) > this.#current + 1);
+        if (!withoutIsolation) return false;
+        for (const willIsolateFn of willIsolateFns) if (willIsolateFn.call(this, src)) return false;
+        return true;
+      }
+
+      #visitIsolatesUp(src) { return this.#visitIsolates(this.#visitImpactsUpDegree(src)); }
+      #visitIsolatesDown(src) { return this.#visitIsolates(this.#visitImpactsDownDegree(src)); }
+      #visitIsolatesLeft(src) { return this.#visitIsolates(this.#visitImpactsLeftDegree(src)); }
+      #visitIsolatesRight(src) { return this.#visitIsolates(this.#visitImpactsRightDegree(src)); }
+      #visitIsolates(cell) { if (cell < 0) return false; const degree = this.#getDegree(cell); return (cell === this.#foot && degree === 1) || (cell !== this.#foot && degree === 2); }
+
+      #doVisitUp(dst,src){ this.#visitDirection(dst, src, [this.#visitImpactsDownDegree, this.#visitImpactsLeftDegree, this.#visitImpactsRightDegree]); }
+      #doVisitDown(dst,src){ this.#visitDirection(dst, src, [this.#visitImpactsUpDegree, this.#visitImpactsLeftDegree, this.#visitImpactsRightDegree]); }
+      #doVisitLeft(dst,src){ this.#visitDirection(dst, src, [this.#visitImpactsUpDegree, this.#visitImpactsDownDegree, this.#visitImpactsRightDegree]); }
+      #doVisitRight(dst,src){ this.#visitDirection(dst, src,[this.#visitImpactsUpDegree, this.#visitImpactsDownDegree, this.#visitImpactsLeftDegree]); }
+
+      #visitDirection(dst, src, impactFns) {
+        this.#setVisited(dst, true);
+        const dstContent = this.#getLabel(dst);
+        if (dstContent > 0) this.#current = dstContent;
+        const newModifications = this.#degreeModifications[this.#visitedCells - 1];
+        for (const impactFn of impactFns) {
+          const cell = impactFn.call(this, src);
+          if (cell >= 0) { this.#decrementDegree(cell); newModifications.push(cell); }
+        }
+        this.#path[this.#visitedCells++] = dst;
+      }
+
+      #visitImpactsUpDegree(src){ if (src >= this.#n){ const up = src - this.#n; const upStatus = this.#cellStatuses[up]; if (!this.maskIsVisited(upStatus) && !this.maskHasDownWall(upStatus)) return up;} return -1; }
+      #visitImpactsDownDegree(src){ if (src < this.#size - this.#n){ const down = src + this.#n; if (!this.#isVisited(down) && !this.#hasDownWall(src)) return down;} return -1; }
+      #visitImpactsLeftDegree(src){ if (src % this.#n !== 0){ const left = src - 1; const leftStatus = this.#cellStatuses[left]; if (!this.maskIsVisited(leftStatus) && !this.maskHasRightWall(leftStatus)) return left;} return -1; }
+      #visitImpactsRightDegree(src){ if (src % this.#n !== this.#n - 1){ const right = src + 1; if (!this.#isVisited(right) && !this.#hasRightWall(src)) return right;} return -1; }
+
+      unvisit(){ if (this.#visitedCells == 1) return false; const lastMove = this.lastMove(); this.#path[(this.#visitedCells--) - 1] = -1; const modifications = this.#degreeModifications[this.#visitedCells - 1]; while (modifications.length !== 0) this.#incrementDegree(modifications.pop()); const lastMoveLabel = this.#getLabel(lastMove); if (lastMoveLabel > 0) this.#current = lastMoveLabel - 1; this.#setVisited(lastMove, false); return true; }
+
+      lastMove(){ return this.#path[this.#visitedCells - 1]; }
+      #isVisited(cell){ return this.maskIsVisited(this.#cellStatuses[cell]); }
+      maskIsVisited(mask){ return (mask & 1) === 1; }
+      #setVisited(cell, visited){ if (visited) this.#cellStatuses[cell] |= 0x1; else this.#cellStatuses[cell] &= ~0x1; }
+      #getDegree(cell){ return this.getMaskDegree(this.#cellStatuses[cell]); }
+      getMaskDegree(mask){ return (mask & 0xE) >>> 1; }
+      #decrementDegree(cell){ this.#cellStatuses[cell] -= 0x2; }
+      #incrementDegree(cell){ this.#cellStatuses[cell] += 0x2; }
+      #hasDownWall(cell){ return this.maskHasDownWall(this.#cellStatuses[cell]); }
+      maskHasDownWall(mask){ return (mask & 0x10) !== 0; }
+      #addDownWall(cell){ this.#cellStatuses[cell] |= 0x10; }
+      #hasRightWall(cell){ return this.maskHasRightWall(this.#cellStatuses[cell]); }
+      maskHasRightWall(mask){ return (mask & 0x20) !== 0; }
+      #addRightWall(cell){ this.#cellStatuses[cell] |= 0x20; }
+      #getLabel(cell){ return this.getMaskLabel(this.#cellStatuses[cell]); }
+      getMaskLabel(mask){ return mask >>> 6; }
+      #label(cell, number){ this.#cellStatuses[cell] |= (number << 6); }
+    }
+
+    /* ========== UI CODE ========== */
+    
+    const gridEl = document.getElementById('grid');
+    const logEl = document.getElementById('log');
+    
+    let H = 6, W = 6;
+    let state = { numbers: {}, downWalls: new Set(), rightWalls: new Set() };
+    let isDragging = false;
+    let dragPath = [];
+    let permanentConnections = [];
+    let selectedCell = null;
+    let currentNumber = 1;
+
+    // Puzzle database
+    const PUZZLE_DATABASE = {
+      6: {
+        1: [[1,0,0,0,0,0],[0,0,0,7,0,0],[0,4,0,8,0,0],[0,0,6,0,5,0],[0,3,0,0,0,0],[0,0,0,0,0,2]],
+        2: [[0,0,0,0,0,0],[0,2,1,8,10,9],[0,3,0,0,0,11],[0,7,0,0,0,12],[0,6,0,0,0,15],[0,4,5,13,14,16]],
+        3: [[0,0,0,0,0,7],[1,16,15,0,6,8],[0,14,0,0,0,9],[13,0,0,0,5,0],[12,2,0,3,4,10],[11,0,0,0,0,0]],
+        4: [[0,6,0,5,1,0],[7,8,0,0,3,2],[10,0,0,0,0,0],[0,0,0,0,0,4],[11,9,0,0,14,16],[0,12,13,0,15,0]],
+        5: [[0,0,0,0,0,0],[0,0,0,0,3,0],[0,6,8,0,4,0],[0,7,0,2,1,0],[0,5,0,0,0,0],[0,0,0,0,0,0]],
+        6: [[0,0,0,2,0,1],[3,13,0,14,0,12],[0,0,0,0,0,0],[0,0,4,0,5,11],[7,0,6,0,0,0],[8,0,0,0,9,10]],
+        7: [[0,0,0,0,0,0],[7,0,0,0,0,8],[0,4,0,2,0,0],[0,0,1,0,3,0],[5,0,0,0,0,6],[0,0,0,0,0,0]],
+        8: [[0,0,0,0,0,0],[0,0,0,0,0,0],[3,2,11,10,1,4],[6,7,12,9,8,5],[0,0,0,0,0,0],[0,0,0,0,0,0]],
+        9: [[0,0,0,0,0,0],[0,2,1,8,10,9],[0,3,0,0,0,11],[0,7,0,0,0,12],[0,6,0,0,0,15],[0,4,5,13,14,16]],
+        10: [[0,0,3,7,0,0],[0,2,0,0,6,0],[0,0,0,0,0,8],[1,0,0,0,0,0],[0,4,0,0,9,0],[0,0,5,10,0,0]]
+      }
+    };
+
+    function log(msg, type='info') {
+      const d = document.createElement('div');
+      d.className = 'log-entry';
+      d.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      if(type==='error') d.style.color = '#ff6b6b';
+      if(type==='success') d.style.color = '#51cf66';
+      if(type==='warning') d.style.color = '#ffd43b';
+      logEl.prepend(d);
+    }
+
+    function createGrid(h, w) {
+      H = h; W = w;
+      gridEl.style.gridTemplateColumns = `repeat(${W}, 56px)`;
+      gridEl.style.gridTemplateRows = `repeat(${H}, 56px)`;
+      gridEl.innerHTML = '';
+      state = { numbers: {}, downWalls: new Set(), rightWalls: new Set() };
+      dragPath = [];
+      permanentConnections = [];
+
+      for (let r = 0; r < H; r++) {
+        for (let c = 0; c < W; c++) {
+          const idx = r * W + c;
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+          cell.dataset.idx = idx;
+          cell.textContent = '';
+          
+          cell.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            
+            // Check if this is a given number (from demo/puzzle)
+            if (state.numbers[idx]) {
+              // Start dragging from numbered cell
+              isDragging = true;
+              dragPath = [idx];
+              cell.classList.add('highlighted');
+              return;
+            }
+            
+            // Single click when not dragging - toggle number
+            if (!isDragging) {
+              selectedCell = idx;
+              return;
+            }
+            
+            isDragging = true;
+            dragPath = [idx];
+            cell.classList.add('highlighted');
+          });
+          
+          cell.addEventListener('click', (e) => {
+            e.preventDefault();
+            // Only allow toggling numbers on empty cells
+            if (selectedCell === idx && !state.numbers[idx]) {
+              toggleNumber(idx);
+              selectedCell = null;
+            }
+          });
+          
+          cell.addEventListener('mouseenter', () => {
+            if (!isDragging) return;
+            
+            const lastIdx = dragPath[dragPath.length - 1];
+            if (!isAdjacent(lastIdx, idx)) return;
+            
+            const secondToLast = dragPath[dragPath.length - 2];
+            if (idx === secondToLast && dragPath.length >= 2) {
+              const removed = dragPath.pop();
+              const removedCell = gridEl.children[removed];
+              removedCell.classList.remove('highlighted');
+              
+              for (let i = permanentConnections.length - 1; i >= 0; i--) {
+                const connection = permanentConnections[i];
+                if (connection.includes(removed)) {
+                  for (const connIdx of connection) {
+                    gridEl.children[connIdx].classList.remove('connected');
+                  }
+                  permanentConnections.splice(i, 1);
+                  log('🔄 Connection removed', 'warning');
+                  break;
+                }
+              }
+              return;
+            }
+            
+            if (dragPath.includes(idx)) return;
+            
+            dragPath.push(idx);
+            cell.classList.add('highlighted');
+          });
+          
+          cell.addEventListener('mouseup', () => {
+            if (isDragging) {
+              finishDrag();
+            }
+          });
+          
+          gridEl.appendChild(cell);
+        }
+      }
+      log(`Grid created: ${H}×${W}`);
+    }
+    
+    function toggleNumber(idx) {
+      const cell = gridEl.children[idx];
+      
+      if (state.numbers[idx]) {
+        // Cycle to next number
+        state.numbers[idx]++;
+        if (state.numbers[idx] > 20) {
+          delete state.numbers[idx];
+        }
+      } else {
+        // Start with currentNumber
+        state.numbers[idx] = currentNumber;
+        // Auto-increment for next placement
+        currentNumber++;
+      }
+      
+      renderGrid();
+    }
+    
+    // Handle keyboard input
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace' && selectedCell !== null) {
+        e.preventDefault();
+        // Only allow removing numbers from empty cells (not given numbers)
+        if (state.numbers[selectedCell] && !isGivenNumber(selectedCell)) {
+          delete state.numbers[selectedCell];
+          renderGrid();
+          log('Number removed', 'info');
+        }
+        selectedCell = null;
+      }
+    });
+    
+    function isGivenNumber(idx) {
+      // Check if this number was part of the original puzzle/demo
+      // We can track this by checking if the cell has the 'given' class
+      return gridEl.children[idx]?.classList.contains('given');
+    }
+    
+    function isAdjacent(idx1, idx2) {
+      const r1 = Math.floor(idx1 / W), c1 = idx1 % W;
+      const r2 = Math.floor(idx2 / W), c2 = idx2 % W;
+      return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1;
+    }
+    
+    function finishDrag() {
+      if (!isDragging) return;
+      isDragging = false;
+      
+      if (dragPath.length < 2) {
+        clearHighlights();
+        dragPath = [];
+        return;
+      }
+      
+      const startNum = state.numbers[dragPath[0]];
+      const endNum = state.numbers[dragPath[dragPath.length - 1]];
+      
+      if (startNum && endNum && Math.abs(endNum - startNum) === 1) {
+        permanentConnections.push([...dragPath]);
+        
+        for (const idx of dragPath) {
+          const cell = gridEl.children[idx];
+          cell.classList.remove('highlighted');
+          cell.classList.add('connected');
+        }
+        
+        log(`✅ Connected ${Math.min(startNum, endNum)} → ${Math.max(startNum, endNum)}`, 'success');
+        checkVictory();
+      } else {
+        clearHighlights();
+      }
+      
+      dragPath = [];
+    }
+    
+    function checkVictory() {
+      const numbers = Object.values(state.numbers);
+      if (numbers.length === 0) return;
+      
+      const minNum = Math.min(...numbers);
+      const maxNum = Math.max(...numbers);
+      
+      const allConnectedCells = new Set();
+      for (const path of permanentConnections) {
+        for (const idx of path) {
+          allConnectedCells.add(idx);
+        }
+      }
+      
+      if (allConnectedCells.size !== H * W) return;
+      
+      const connectedPairs = new Set();
+      for (const path of permanentConnections) {
+        const startNum = state.numbers[path[0]];
+        const endNum = state.numbers[path[path.length - 1]];
+        if (startNum && endNum) {
+          const pair = `${Math.min(startNum, endNum)}-${Math.max(startNum, endNum)}`;
+          connectedPairs.add(pair);
+        }
+      }
+      
+      let allConnected = true;
+      for (let i = minNum; i < maxNum; i++) {
+        if (!connectedPairs.has(`${i}-${i + 1}`)) {
+          allConnected = false;
+          break;
+        }
+      }
+      
+      if (allConnected) {
+        const connectionMap = new Map();
+        for (const path of permanentConnections) {
+          for (let i = 0; i < path.length - 1; i++) {
+            if (!connectionMap.has(path[i])) connectionMap.set(path[i], []);
+            if (!connectionMap.has(path[i + 1])) connectionMap.set(path[i + 1], []);
+            connectionMap.get(path[i]).push(path[i + 1]);
+            connectionMap.get(path[i + 1]).push(path[i]);
+          }
+        }
+        
+        let validPath = true;
+        for (let i = 0; i < H * W; i++) {
+          const connections = connectionMap.get(i) || [];
+          const isNumbered = state.numbers[i] !== undefined;
+          
+          if (isNumbered) {
+            const num = state.numbers[i];
+            if (num === minNum || num === maxNum) {
+              if (connections.length !== 1) validPath = false;
+            } else {
+              if (connections.length !== 2) validPath = false;
+            }
+          } else {
+            if (connections.length !== 2) validPath = false;
+          }
+        }
+        
+        if (validPath) {
+          showVictory();
+        }
+      }
+    }
+    
+    function clearHighlights() {
+      for (const cell of gridEl.children) {
+        cell.classList.remove('highlighted');
+      }
+    }
+    
+    function showVictory() {
+      log('🎉 PUZZLE SOLVED! 🎉', 'success');
+      
+      const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+      for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+          const confetti = document.createElement('div');
+          confetti.style.position = 'fixed';
+          confetti.style.left = Math.random() * window.innerWidth + 'px';
+          confetti.style.top = '-10px';
+          confetti.style.width = '10px';
+          confetti.style.height = '10px';
+          confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+          confetti.style.borderRadius = '50%';
+          confetti.style.pointerEvents = 'none';
+          confetti.style.zIndex = '10000';
+          document.body.appendChild(confetti);
+          
+          const duration = 2000 + Math.random() * 1000;
+          const endY = window.innerHeight + 20;
+          const startTime = Date.now();
+          
+          function animate() {
+            const elapsed = Date.now() - startTime;
+            const progress = elapsed / duration;
+            
+            if (progress < 1) {
+              confetti.style.top = (progress * endY) + 'px';
+              confetti.style.transform = `rotate(${progress * 360 * 3}deg)`;
+              requestAnimationFrame(animate);
+            } else {
+              confetti.remove();
+            }
+          }
+          animate();
+        }, i * 30);
+      }
+    }
+    
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        finishDrag();
+      }
+    });
+
+    function renderGrid() {
+      for (let r = 0; r < H; r++) {
+        for (let c = 0; c < W; c++) {
+          const idx = r * W + c;
+          const cell = gridEl.children[idx];
+          const num = state.numbers[idx];
+          
+          cell.textContent = num || '';
+          cell.classList.toggle('given', !!num);
+          cell.style.backgroundColor = '';
+        }
+      }
+    }
+
+    function gatherSolverInput() {
+      const maxNumber = Math.max(0, ...Object.values(state.numbers));
+      if (maxNumber < 1) throw new Error('Need at least number 1 to define start');
+      
+      const numberedCells = new Array(maxNumber);
+      for (const [idxStr, num] of Object.entries(state.numbers)) {
+        const idx = Number(idxStr);
+        if (num < 1 || num > maxNumber) throw new Error('Invalid numbered cell ' + num);
+        numberedCells[num - 1] = idx;
+      }
+      
+      for (let i = 0; i < numberedCells.length; i++) {
+        if (numberedCells[i] === undefined) throw new Error('Missing numbered cell ' + (i + 1));
+      }
+      
+      return {
+        m: H,
+        n: W,
+        numberedCells,
+        downWalls: Array.from(state.downWalls),
+        rightWalls: Array.from(state.rightWalls)
+      };
+    }
+
+    async function autoSolve() {
+      try {
+        const input = gatherSolverInput();
+        log('Solving instantly...');
+        
+        const zip = new ZipGrid(input.m, input.n, input.numberedCells, input.downWalls, input.rightWalls);
+        const seq = zip.solve();
+        
+        // Clear existing paths
+        permanentConnections = [];
+        for (const cell of gridEl.children) {
+          cell.classList.remove('connected', 'highlighted', 'solved', 'visited');
+        }
+        
+        // Mark entire path as connected (orange)
+        for (let i = 0; i < seq.length; i++) {
+          const idx = seq[i];
+          const cell = gridEl.children[idx];
+          cell.classList.add('connected');
+        }
+        
+        log('✅ Solution found instantly!', 'success');
+      } catch (err) {
+        log('❌ No solution exists', 'error');
+        console.error(err);
+      }
+    }
+
+    async function animatedSolve() {
+      try {
+        const input = gatherSolverInput();
+        log('🔍 Starting animated solve...');
+        
+        permanentConnections = [];
+        for (const cell of gridEl.children) {
+          cell.classList.remove('connected', 'highlighted', 'solved', 'visited');
+          if (!state.numbers[cell.dataset.idx]) {
+            cell.textContent = '';
+            cell.style.backgroundColor = '';
+          }
+        }
+        
+        const zip = new ZipGrid(input.m, input.n, input.numberedCells, input.downWalls, input.rightWalls);
+        const seq = zip.solve();
+        
+        const numberedCells = input.numberedCells;
+        
+        for (let numIdx = 0; numIdx < numberedCells.length - 1; numIdx++) {
+          const currentNum = numIdx + 1;
+          const nextNum = currentNum + 1;
+          const startIdx = numberedCells[numIdx];
+          const endIdx = numberedCells[numIdx + 1];
+          
+          log(`🔗 Connecting ${currentNum} → ${nextNum}...`);
+          
+          const startPos = seq.indexOf(startIdx);
+          const endPos = seq.indexOf(endIdx);
+          
+          if (startPos === -1 || endPos === -1) {
+            throw new Error(`Cannot find path segment ${currentNum} → ${nextNum}`);
+          }
+          
+          const pathSegment = [];
+          if (startPos < endPos) {
+            for (let i = startPos; i <= endPos; i++) {
+              pathSegment.push(seq[i]);
+            }
+          } else {
+            for (let i = startPos; i >= endPos; i--) {
+              pathSegment.push(seq[i]);
+            }
+          }
+          
+          for (let i = 0; i < pathSegment.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const idx = pathSegment[i];
+            const cell = gridEl.children[idx];
+            
+            cell.classList.add('connected');
+            
+            cell.style.transform = 'scale(1.15)';
+            setTimeout(() => { cell.style.transform = ''; }, 200);
+          }
+          
+          permanentConnections.push(pathSegment);
+          
+          log(`✅ Connected ${currentNum} → ${nextNum}`, 'success');
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        
+        log('🎉 Animation complete!', 'success');
+        
+      } catch (err) {
+        log('❌ No solution exists', 'error');
+        console.error(err);
+      }
+    }
+
+    function getHint() {
+      try {
+        const input = gatherSolverInput();
+        const zip = new ZipGrid(input.m, input.n, input.numberedCells, input.downWalls, input.rightWalls);
+        const seq = zip.solve();
+        
+        for (let i = 0; i < seq.length; i++) {
+          const idx = seq[i];
+          if (!state.numbers[idx]) {
+            const r = Math.floor(idx / W) + 1;
+            const c = (idx % W) + 1;
+            const cell = gridEl.children[idx];
+            cell.style.boxShadow = '0 0 20px 6px rgba(255,204,0,0.9)';
+            setTimeout(() => cell.style.boxShadow = '', 2000);
+            log(`💡 Hint: Next move is position (${r},${c})`, 'success');
+            return;
+          }
+        }
+        log('No hint needed - puzzle solved!', 'success');
+      } catch (err) {
+        log('❌ No solution exists', 'error');
+      }
+    }
+
+    function loadDemo() {
+      if (H !== 6 || W !== 6) {
+        createGrid(6, 6);
+      }
+      
+      const randomIndex = Math.floor(Math.random() * 10) + 1;
+      const puzzle = PUZZLE_DATABASE[6][randomIndex];
+      
+      state.numbers = {};
+      permanentConnections = [];
+      currentNumber = 1;
+      
+      for (const cell of gridEl.children) {
+        cell.classList.remove('connected', 'highlighted', 'given', 'solved', 'visited');
+        cell.textContent = '';
+        cell.style.backgroundColor = '';
+      }
+      
+      for (let r = 0; r < 6; r++) {
+        for (let c = 0; c < 6; c++) {
+          if (puzzle[r][c] > 0) {
+            const idx = r * W + c;
+            state.numbers[idx] = puzzle[r][c];
+          }
+        }
+      }
+      
+      renderGrid();
+      log(`Demo puzzle #${randomIndex} loaded!`, 'success');
+    }
+
+    function clearAll() {
+      state = { numbers: {}, downWalls: new Set(), rightWalls: new Set() };
+      permanentConnections = [];
+      dragPath = [];
+      currentNumber = 1;
+      createGrid(H, W);
+      log('Board cleared');
+    }
+    
+    function undoLastMove() {
+      if (permanentConnections.length === 0) {
+        log('No moves to undo', 'warning');
+        return;
+      }
+      
+      const lastConnection = permanentConnections.pop();
+      
+      for (const idx of lastConnection) {
+        const cell = gridEl.children[idx];
+        cell.classList.remove('connected');
+      }
+      
+      log('↩️ Last move undone', 'success');
+    }
+
+    document.getElementById('solveBtn').addEventListener('click', autoSolve);
+    document.getElementById('animateBtn').addEventListener('click', animatedSolve);
+    document.getElementById('undoBtn').addEventListener('click', undoLastMove);
+    document.getElementById('demoBtn').addEventListener('click', loadDemo);
+    document.getElementById('resetBtn').addEventListener('click', clearAll);
+
+    createGrid(6, 6);
+  </script>
+</body>
+</html>
