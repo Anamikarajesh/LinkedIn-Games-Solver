@@ -6,7 +6,7 @@ The application runs entirely in the browser, using **Pyodide** to load a Python
 
 ---
 
-## 🚀 Features
+##  Features
 
 * **Fully Interactive UI:** Users can play the game themselves by clicking to place and remove queens.
 * **Dynamic Board:** The chessboard and queen icons are fully responsive and resize perfectly based on the N-value.
@@ -21,16 +21,22 @@ The application runs entirely in the browser, using **Pyodide** to load a Python
 
 ---
 
-## 📸 Screenshots
+##  Screenshots
 
-*(Space to add your screenshots)*
 
-*A screenshot of the main game board and controls*
-*A screenshot showing the red conflict highlighting and the warning bar*
-*A screenshot showing the congratulations pop-up over a solved board*
+
+A screenshot of the main game board and controls
+<img width="1897" height="934" alt="image" src="https://github.com/user-attachments/assets/bc0b9139-9307-484b-bbd3-824cec3934fe" />
+
+A screenshot showing the red conflict highlighting and the warning bar
+<img width="1918" height="944" alt="image" src="https://github.com/user-attachments/assets/c201a5e6-b646-4be1-b770-4ca414fba03d" />
+
+A screenshot showing the congratulations pop-up over a solved board
+<img width="1918" height="944" alt="image" src="https://github.com/user-attachments/assets/0a354e54-a030-408a-be31-c0dc790503e2" />
+
 ---
 
-## 🧠 AI Concepts & Algorithms Used
+##  AI Concepts & Algorithms Used
 
 This project uses two different families of AI algorithms to showcase different approaches to solving a Constraint Satisfaction Problem (CSP).
 
@@ -61,7 +67,7 @@ This project uses two different families of AI algorithms to showcase different 
 
 ---
 
-## ⚠️ Limitations
+##  Limitations
 
 * **Hint AI Performance:** Backtracking has a time complexity of $O(N!)$, which is incredibly slow. To prevent the user's browser from freezing, the "Hint (AI)" button is automatically disabled for N > 14.
 * **Board Size Cap:** The board size is capped at N = 25. While the SA solver could theoretically handle larger N, drawing a 100x100 grid in a browser would be unusable and crash the page.
@@ -69,7 +75,7 @@ This project uses two different families of AI algorithms to showcase different 
 
 ---
 
-## 💻 How to Run
+##  How to Run
 
 No server is needed! This project runs 100% in the browser.
 
@@ -105,3 +111,4 @@ Next steps / Improvements
 - Add a visual tree explorer showing the current path in the search tree.
 - Flesh out the Queens, Tango, and Zip solvers referenced on the landing page.
 - Add unit tests or snapshot-based smoke tests for the generator and validity checks.
+
