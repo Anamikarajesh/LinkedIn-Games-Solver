@@ -475,6 +475,15 @@
   // logs are shown inline; no separate progress area
 
     const grid = readGrid();
+
+    // Before running a full search, check if the current grid is
+    // logically solvable. If the user has entered a wrong move that
+    // makes the puzzle inconsistent, abort and tell them instead of
+    // letting the AI search forever.
+    if(!isSolvableGrid(grid)){
+      appendLog('Current puzzle state is impossible to solve. Please undo the red cells or reset.');
+      return;
+    }
     const gen = solverGenerator(grid, {delay:50});
     try{
       for await (const ev of gen){
@@ -499,6 +508,14 @@
     // keep existing saved log, but clear progress text
   // no separate progress area now; logs are shown inline
     const grid = readGrid();
+
+    // If the current grid is unsolvable (because of a wrong move),
+    // don't attempt to search for a hint; instead, instruct user to
+    // undo the conflicting move.
+    if(!isSolvableGrid(grid)){
+      appendLog('Cannot provide a hint: current puzzle state is impossible. Please undo the red cells or reset.');
+      return;
+    }
     const gen = solverGenerator(grid);
     for await (const ev of gen){
       // show each internal event so the user sees steps while hint searches
