@@ -26,13 +26,18 @@ The application runs entirely in the browser, using **Pyodide** to load a Python
 
 
 A screenshot of the main game board and controls
-<img width="1897" height="934" alt="image" src="https://github.com/user-attachments/assets/bc0b9139-9307-484b-bbd3-824cec3934fe" />
+<img width="1878" height="944" alt="image" src="https://github.com/user-attachments/assets/efecdb77-00d9-46d8-911c-e242a8d8c618" />
+
 
 A screenshot showing the red conflict highlighting and the warning bar
-<img width="1918" height="944" alt="image" src="https://github.com/user-attachments/assets/c201a5e6-b646-4be1-b770-4ca414fba03d" />
+<img width="1897" height="934" alt="image" src="https://github.com/user-attachments/assets/bc0b9139-9307-484b-bbd3-824cec3934fe" />
 
 A screenshot showing the congratulations pop-up over a solved board
 <img width="1918" height="944" alt="image" src="https://github.com/user-attachments/assets/0a354e54-a030-408a-be31-c0dc790503e2" />
+
+Ai progress display
+<img width="834" height="836" alt="image" src="https://github.com/user-attachments/assets/6e31f81d-897b-4f5f-bd9a-b7acfbfcdcf4" />
+
 
 ---
 
@@ -111,4 +116,5 @@ Next steps / Improvements
 - Add a visual tree explorer showing the current path in the search tree.
 - Flesh out the Queens, Tango, and Zip solvers referenced on the landing page.
 - Add unit tests or snapshot-based smoke tests for the generator and validity checks.
+
 
