@@ -1,10 +1,10 @@
 # LinkedIn Games Solver
 
 ## Table of Contents
-1. [Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)](#mini-sudoku--linkedin-games-solver-mini-sudoku)
-2. [Queens AI Solver](#queens-ai-solver)
-3. [Tango — Sun & Moon (LinkedIn Game Solver)](#tango--sun--moon-linkedin-game-solver)
-4. [Zip — LinkedIn Game Solver](#zip--linkedin-game-solver)
+1. [Mini Sudoku — LinkedIn Games Solver (Mini Sudoku) - Anamika Rajesh](#mini-sudoku--linkedin-games-solver-mini-sudoku)
+2. [Queens AI Solver - Sneha Nagmoti](#queens-ai-solver)
+3. [Tango — Sun & Moon (LinkedIn Game Solver) - Ritika Singh Katoch](#tango--sun--moon-linkedin-game-solver)
+4. [Zip — LinkedIn Game Solver - Bonta Aalaya](#zip--linkedin-game-solver)
 
 # Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)
 
@@ -284,6 +284,7 @@ A path-finding “number snake” puzzle inspired by LinkedIn’s Zip daily chal
 3. Click **Auto Solve** or **Solve (Animated)** to watch the pathfinder complete the puzzle.
 
 ---
+
 
 
 
