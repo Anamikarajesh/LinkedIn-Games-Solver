@@ -161,7 +161,7 @@ queens-puzzle/
 ├── queens_game.js        # JavaScript game logic (UI, event handlers, Pyodide bridge)
 └── queens_solver.py      # Python AI solver (Backtracking, CSP logic)
 ```
-````
+
 
 
 # Tango — Sun & Moon (LinkedIn Game Solver)
