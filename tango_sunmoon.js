@@ -10,8 +10,9 @@ const connEl = document.getElementById('connectors');
 let selected=null;
 let givens=new Set();
 let py=null, pySolve=null, pyHint=null;
+let pyReady = null;
 
-// WE CHANGE THESE TO LET INSTEAD OF CONST (so they can be randomized)
+// Randomizable constraints (will be filled at runtime)
 let EQUALS = [];
 let OPPOS = [];
 
@@ -66,6 +67,7 @@ function setCell(r,c,val,opts={prefill:false}){
     }
   }
   validateCell(r,c);
+  checkSolved();
 }
 
 function getCell(r,c){
@@ -173,23 +175,30 @@ function validateCell(r,c){
   return ok;
 }
 
-// Pyodide
-async function boot(){
-  log('Loading Pyodide...');
-  py = await loadPyodide();
-  const code = await (await fetch('tango_solver.py')).text();
-  await py.runPythonAsync(code);
-  pySolve = py.globals.get('solve_grid');
-  pyHint = py.globals.get('hint_cell');
-  document.getElementById('hintBtn').disabled=false;
-  document.getElementById('solveBtn').disabled=false;
-  log('Python ready.');
+// Lazy Pyodide loader (loads on first use)
+async function ensurePy(){
+  if(pyReady) return pyReady;
+  log('Loading Pyodide (this may take a few seconds)...');
+  document.getElementById('loader').style.display = 'block';
+  pyReady = (async ()=>{
+    py = await loadPyodide();
+    const code = await (await fetch('tango_solver.py')).text();
+    await py.runPythonAsync(code);
+    pySolve = py.globals.get('solve_grid');
+    pyHint = py.globals.get('hint_cell');
+    document.getElementById('hintBtn').disabled=false;
+    document.getElementById('solveBtn').disabled=false;
+    document.getElementById('loader').style.display = 'none';
+    log('Python engine ready.');
+    return py;
+  })();
+  return pyReady;
 }
-boot();
 
 // Solve step-by-step
 document.getElementById('solveBtn').addEventListener('click', async ()=>{
   const start = readGrid();
+  await ensurePy();
   const solObj = pySolve(start, EQUALS, OPPOS);
   const sol = solObj && solObj.toJs ? solObj.toJs() : null;
   if(!sol){ log('No solution.'); return; }
@@ -206,10 +215,11 @@ document.getElementById('solveBtn').addEventListener('click', async ()=>{
 });
 
 // Random Puzzle with RANDOM = and ×
-document.getElementById('randomBtn').addEventListener('click', ()=>{
+document.getElementById('randomBtn').addEventListener('click', async ()=>{
   givens.clear();
   for(let r=0;r<N;r++) for(let c=0;c<N;c++) setCell(r,c,null);
 
+  await ensurePy();
   const empty = Array.from({length:N},()=>Array(N).fill(null));
   const solObj = pySolve(empty, EQUALS, OPPOS);
   const sol = solObj && solObj.toJs ? solObj.toJs() : null;
@@ -230,16 +240,15 @@ document.getElementById('randomBtn').addEventListener('click', ()=>{
       }
     }
   }
+  // limit opposites to avoid too many ×
+  if(OPPOS.length > 6) OPPOS = OPPOS.slice(0,6);
 
   renderPairs();
   drawConnectors();
 
   const cells = [];
   for(let r=0;r<N;r++) for(let c=0;c<N;c++) cells.push([r,c]);
-  for(let i=cells.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));
-    [cells[i],cells[j]]=[cells[j],cells[i]];
-  }
+  for(let i=cells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [cells[i],cells[j]]=[cells[j],cells[i]]; }
 
   const minGive = Math.floor(N*N*0.25), maxGive = Math.floor(N*N*0.4);
   const giveCount = Math.floor(Math.random()*(maxGive-minGive+1))+minGive;
@@ -247,19 +256,26 @@ document.getElementById('randomBtn').addEventListener('click', ()=>{
     const [r,c]=cells[k];
     setCell(r,c, sol[r][c], {prefill:true});
   }
-
+  drawConnectors();
+  // validate all prefills
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) validateCell(r,c);
   log('Random puzzle ready.');
 });
 
-// Hint
+// Hint (random empty from solution)
 document.getElementById('hintBtn').addEventListener('click', async ()=>{
   const g = readGrid();
-  const res = pyHint(g, EQUALS, OPPOS);
-  const h = res && res.toJs ? res.toJs() : null;
-  if(!h){ log('No hint.'); return; }
-  const [r,c,v]=h;
-  setCell(r,c,v);
-  log(`Hint: (${r+1},${c+1}) ${(v===1?'☀️':'🌙')}`);
+  await ensurePy();
+  const solObj = pySolve(g, EQUALS, OPPOS);
+  const sol = solObj && solObj.toJs ? solObj.toJs() : null;
+  if(!sol){ log('No hint (unsatisfiable).'); return; }
+  const empties = [];
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(getCell(r,c)===null) empties.push([r,c]);
+  if(empties.length===0){ log('Board already complete.'); return; }
+  const pick = empties[Math.floor(Math.random()*empties.length)];
+  const [rr,cc] = pick; const val = sol[rr][cc];
+  setCell(rr,cc,val);
+  log(`Hint: (${rr+1},${cc+1}) ${(val===1?'☀️':'🌙')}`);
 });
 
 // RESET
@@ -269,8 +285,32 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   logEl.innerHTML='';
 });
 
-// Init
+// Check full board solved and show modal
+function checkSolved(){
+  for(let r=0;r<N;r++) for(let c=0;c<N;c++){
+    if(getCell(r,c)===null) return false;
+    if(gridEl.children[id(r,c)].classList.contains('invalid')) return false;
+  }
+  (async ()=>{
+    await ensurePy();
+    const g = readGrid();
+    const solObj = pySolve(g, EQUALS, OPPOS);
+    const sol = solObj && solObj.toJs ? solObj.toJs() : null;
+    if(!sol) return false;
+    for(let r=0;r<N;r++) for(let c=0;c<N;c++) if(sol[r][c] !== getCell(r,c)) return false;
+    document.getElementById('successModal').style.display = 'flex';
+    return true;
+  })();
+  return true;
+}
+
+document.getElementById('closeSuccess')?.addEventListener('click', ()=>{
+  document.getElementById('successModal').style.display = 'none';
+});
+
+// Init: create grid and generate one random puzzle on load
 createGrid();
 renderPairs();
-drawConnectors();
+// initial random generation (calls ensurePy then sets up a puzzle)
+(async ()=>{ await ensurePy(); document.getElementById('randomBtn').click(); })();
 window.addEventListener('resize', drawConnectors);
