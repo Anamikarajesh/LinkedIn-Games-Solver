@@ -3,394 +3,533 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N-Queens AI Solver</title>
-    
-    <!-- Load Pyodide -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
-    
-    <!-- Load a nice font (Inter) -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- Load FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-    <!-- All styles are now inside the HTML file -->
+    <title>Queens Puzzle Game</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --font-main: 'Inter', sans-serif;
-            --bg-dark: #1a1a2e;
-            --bg-med: #16213e;
-            --bg-light: #2a2a3e;
-            --primary: #8a4fff;
-            --primary-hover: #a170ff;
-            --secondary: #5a5a7a;
-            --text-light: #f0f0f0;
-            --text-med: #a0a0c0;
-            --cell-light: #f0d9b5;
-            --cell-dark: #b58863;
-            --queen-color: #1a1a2e;
-            --queen-conflict: #d93025; /* Red for conflicts */
-            --warning-bg: #d93025; /* Red for warning bar */
-            --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --shadow-md: 0 10px 15px rgba(0, 0, 0, 0.2);
-            --radius: 12px;
-        }
-
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
-            color: var(--text-light);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #2d2d4a;
+            min-height: 100vh;
             padding: 20px;
-            overscroll-behavior: none;
         }
 
-        header {
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
-        header h1 {
-            font-weight: 700;
-        }
-
-        header a {
-            color: var(--text-med);
-            text-decoration: none;
-            font-size: 0.9em;
-            transition: color 0.2s ease;
-        }
-        header a:hover {
-            color: var(--primary);
-        }
-
-        main {
+        .title {
+            font-size: 2rem;
+            color: #ffffff;
+            font-weight: normal;
             display: flex;
-            gap: 25px;
-            /* Responsive layout */
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
         }
 
-        .left-panel {
-            flex: 2; /* Takes 2/3 of space */
-            min-width: 300px;
+        .title:hover {
+            opacity: 0.8;
         }
 
-        /* --- NEW: Warning Bar Style --- */
-        #warning-bar {
-            display: none; /* Hidden by default */
-            background-color: var(--warning-bg);
-            color: var(--text-light);
-            padding: 12px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-weight: 500;
-            animation: fadeIn 0.3s ease;
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: transparent;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
         }
-        #warning-bar.active {
-            display: block; /* Show it */
-        }
-        /* --- End New Style --- */
 
-        .right-panel {
-            flex: 1; /* Takes 1/3 of space */
-            min-width: 300px;
+        .back-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* Difficulty Selection Screen */
+        .difficulty-screen {
             display: flex;
             flex-direction: column;
-            gap: 20px;
-        }
-
-        .panel-box {
-            background-color: var(--bg-light);
-            padding: 20px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-sm);
-        }
-
-        /* --- Board Styles --- */
-        #board-container {
-            display: grid;
-            border: 4px solid var(--bg-light);
-            border-radius: var(--radius);
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-            /* grid-template-columns is set by JS */
-        }
-
-        .board-cell {
-            /* This is the magic for perfect squares that resize */
-            aspect-ratio: 1 / 1; 
-            display: flex;
+            align-items: center;
             justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            transition: background-color 0.2s ease;
-            /* Font size is set by JS */
-        }
-        .cell-light { background-color: var(--cell-light); }
-        .cell-dark { background-color: var(--cell-dark); }
-
-        .board-cell:hover {
-            background-color: #c9b491; /* Hover effect */
-        }
-        
-        .queen {
-            /* This is now styling the <i> icon, not text */
-            color: var(--queen-color);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
-            /* Make queen icon non-clickable */
-            pointer-events: none; 
-            /* Fix icon size inheritance */
-            font-size: inherit; 
+            min-height: 60vh;
         }
 
-        /* This is the "wrong move signal" */
-        .queen.conflict {
-            color: var(--queen-conflict);
-            animation: conflictPulse 0.8s ease-in-out;
+        .difficulty-screen.hidden {
+            display: none;
         }
 
-        @keyframes conflictPulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        /* --- Controls & Buttons --- */
-        .controls-header {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+        .difficulty-title {
+            font-size: 3rem;
+            color: #ffffff;
+            font-weight: bold;
             margin-bottom: 20px;
         }
-        .controls-header label {
-            font-weight: 500;
-            color: var(--text-med);
-        }
-        input[type="number"] {
-            width: 70px;
-            padding: 10px;
-            background-color: var(--bg-dark);
-            border: 1px solid var(--bg-med);
-            border-radius: 8px;
-            color: var(--text-light);
-            font-size: 1em;
-            font-weight: 500;
+
+        .difficulty-subtitle {
+            font-size: 1.2rem;
+            color: #b8b8d1;
+            margin-bottom: 50px;
         }
 
-        .button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .difficulty-buttons {
+            display: flex;
+            gap: 30px;
         }
 
-        button {
-            padding: 12px;
+        .difficulty-btn {
+            padding: 40px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
             border: none;
-            border-radius: 8px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 0.95em;
-            font-weight: 500;
-            font-family: var(--font-main);
-            transition: all 0.2s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        /* Hover effect for buttons */
-        button:not(:disabled):hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .btn-primary {
-            background-color: var(--primary);
+            transition: all 0.3s ease;
             color: white;
-        }
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
+            box-shadow: 0 10px 30px rgba(157, 141, 241, 0.4);
         }
 
-        .btn-secondary {
-            background-color: var(--secondary);
-            color: var(--text-light);
+        .difficulty-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(157, 141, 241, 0.6);
         }
-        .btn-secondary:hover {
-            background-color: #7a7a9a;
+
+        .btn-easy {
+            background: #9d8df1;
         }
-        
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
+
+        .btn-hard {
+            background: #7d6dd1;
+        }
+
+        .difficulty-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #b8b8d1;
+        }
+
+        /* Game Screen */
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .board-container {
+            background: #3d3d5c;
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #5d5d8d;
             box-shadow: none;
         }
 
-        /* --- Constraints & Log --- */
-        .panel-box h3 {
-            font-weight: 700;
-            color: var(--text-med);
+        .board {
+            display: grid;
+            gap: 3px;
             margin-bottom: 15px;
-            border-bottom: 1px solid var(--bg-med);
-            padding-bottom: 10px;
-        }
-        .panel-box ul {
-            padding-left: 20px;
-            color: var(--text-med);
-        }
-        .panel-box li {
-            margin-bottom: 8px;
+            background: #000000;
+            padding: 5px;
+            border-radius: 10px;
         }
 
-        #ai-progress-log {
-            height: 250px;
-            background-color: var(--bg-dark);
-            border-radius: 8px;
-            padding: 15px;
-            overflow-y: auto;
-            font-family: "Courier New", Courier, monospace;
-            font-size: 0.9em;
-            border: 1px solid var(--bg-med);
-        }
-        #ai-progress-log div {
-            padding: 4px 0;
-            border-bottom: 1px dashed var(--bg-med);
-            color: var(--text-med);
-            word-break: break-all;
-        }
-        #ai-progress-log div:first-child {
-            color: var(--text-light);
-        }
-
-        /* --- Modal Styles --- */
-        /* This overlay dims and blurs, but leaves the board VISIBLE */
-        .modal-overlay {
-            display: none; /* Hidden by default */
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.7);
-            justify-content: center;
+        .cell {
+            display: flex;
             align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
+            justify-content: center;
+            background: #1a1a1a;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 2rem;
+            position: relative;
+            border-radius: 3px;
         }
-        .modal-overlay.active {
+
+        .cell:hover {
+            transform: scale(1.05);
+            filter: brightness(1.3);
+        }
+
+        .cell.invalid {
+            animation: shake 0.3s;
+            box-shadow: 
+                inset 0 0 20px #FF006680,
+                inset 0 0 40px #FF006660,
+                0 0 15px #FF0066,
+                0 0 30px #FF0066,
+                0 0 45px #FF006680,
+                0 0 60px #FF006660 !important;
+            filter: brightness(1.5);
+        }
+
+        .cell.hint {
+            animation: pulseGlow 1s infinite;
+            box-shadow: 
+                inset 0 0 20px #00FF8880,
+                inset 0 0 40px #00FF8860,
+                0 0 15px #00FF88,
+                0 0 30px #00FF88,
+                0 0 45px #00FF8880,
+                0 0 60px #00FF8860 !important;
+            filter: brightness(1.5);
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { 
+                filter: brightness(1.5);
+            }
+            50% { 
+                filter: brightness(2);
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .queen-icon {
+            color: #C0C0C0;
+            filter: drop-shadow(0 0 6px #E8E8E8) drop-shadow(0 0 12px #D3D3D3) drop-shadow(0 0 18px #A9A9A9);
+            animation: queenGlow 2s infinite;
+        }
+
+        @keyframes queenGlow {
+            0%, 100% { 
+                filter: drop-shadow(0 0 6px #E8E8E8) drop-shadow(0 0 12px #D3D3D3) drop-shadow(0 0 18px #A9A9A9);
+            }
+            50% { 
+                filter: drop-shadow(0 0 10px #F5F5F5) drop-shadow(0 0 18px #E0E0E0) drop-shadow(0 0 25px #C0C0C0);
+            }
+        }
+
+        .stats {
+            font-size: 0.9rem;
+            color: #b8b8d1;
+        }
+
+        .controls-panel {
+            flex: 0 0 280px;
             display: flex;
-        }
-        .modal-content {
-            background-color: var(--bg-light);
-            padding: 30px 40px;
-            border-radius: var(--radius);
-            text-align: center;
-            box-shadow: var(--shadow-md);
-            animation: fadeIn 0.3s ease;
-        }
-        .modal-content h2 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 2em;
-        }
-        .modal-content p {
-            font-size: 1.1em;
-            color: var(--text-med);
-            margin: 15px 0 25px 0;
-        }
-        .modal-buttons {
-            display: flex;
+            flex-direction: column;
             gap: 15px;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+        .control-box {
+            background: #3d3d5c;
+            padding: 0;
+            border-radius: 15px;
+            border: 2px solid #5d5d8d;
+            box-shadow: none;
+            overflow: hidden;
         }
-        
-        /* --- Responsive Layout --- */
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-            main {
-                flex-direction: column-reverse;
-            }
-            .left-panel, .right-panel {
-                min-width: 100%;
-            }
+
+        .control-box.constraints-box,
+        .control-box.progress-box {
+            padding: 20px;
+        }
+
+        .control-title {
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-display {
+            min-height: 100px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-start;
+            flex-direction: column;
+            background: #2d2d4a;
+            border-radius: 10px;
+            color: #e0e0f0;
+            font-weight: 400;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            padding: 15px;
+            line-height: 1.6;
+            overflow-y: auto;
+            max-height: 150px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            color: white;
+            box-shadow: none;
+            background: #9d8df1;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #b8a9ff;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-new-game {
+            background: #9d8df1;
+        }
+
+        .manual-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .rules-list {
+            list-style: none;
+            font-size: 0.9rem;
+            color: #b8b8d1;
+        }
+
+        .rules-list li {
+            padding: 8px 0;
+        }
+
+        .congrats-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .congrats-modal.show {
+            display: flex;
+        }
+
+        .congrats-content {
+            background: #3b3b5a;
+            padding: 50px;
+            border-radius: 20px;
+            text-align: center;
+            animation: bounce 0.5s;
+            min-width: 400px;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .congrats-title {
+            font-size: 2.5rem;
+            color: #a78bfa;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .congrats-text {
+            color: #d1d5db;
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+        }
+
+        .congrats-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .congrats-btn {
+            padding: 15px 30px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        .btn-play-again {
+            background: #6b7280;
+        }
+
+        .btn-play-again:hover {
+            background: #4b5563;
+            transform: scale(1.05);
+        }
+
+        .btn-go-home {
+            background: #a78bfa;
+        }
+
+        .btn-go-home:hover {
+            background: #8b5cf6;
+            transform: scale(1.05);
         }
     </style>
 </head>
 <body>
-
-    <header>
-        <h1>N-Queens AI Solver</h1>
-        <a href="index.html">Back to Home</a>
-    </header>
-    
-    <main>
-        <div class="left-panel">
-            <!-- NEW: Warning Bar -->
-            <div id="warning-bar">You must fix the conflict before placing a new queen!</div>
-            
-            <!-- The chessboard is dynamically generated here -->
-            <div id="board-container"></div>
-        </div>
-
-        <div class="right-panel">
-            <div class="panel-box controls">
-                <div class="controls-header">
-                    <label for="board-size">Board Size (N):</label>
-                    <input type="number" id="board-size" value="8" min="4" max="25">
-                </div>
-                <div class="button-grid">
-                    <button id="hint-button" class="btn-primary"><i class="fa-solid fa-lightbulb"></i> Hint (AI)</button>
-                    <button id="solve-button" class="btn-primary"><i class="fa-solid fa-bolt"></i> Solve (AI)</button>
-                    <button id="undo-button" class="btn-secondary"><i class="fa-solid fa-rotate-left"></i> Undo</button>
-                    <button id="clear-button" class="btn-secondary"><i class="fa-solid fa-trash"></i> Clear</button>
-                </div>
+    <div class="container">
+        <!-- Difficulty Selection Screen -->
+        <div class="difficulty-screen" id="difficulty-screen">
+            <div class="difficulty-title">
+                <i class="fas fa-crown"></i> Queens Puzzle
             </div>
-
-            <div class="panel-box constraints-panel">
-                <h3>Constraints</h3>
-                <ul>
-                    <li>Place N queens on an N×N board.</li>
-                    <li>No two queens may threaten each other.</li>
-                    <li>This means no two queens can be on the same <strong>row</strong>, <strong>column</strong>, or <strong>diagonal</strong>.</li>
-                </ul>
-            </div>
-
-            <div class="panel-box ai-panel">
-                <h3>AI Progress</h3>
-                <div id="ai-progress-log">
-                    <!-- Logs will appear here -->
+            <div class="difficulty-subtitle">Choose your difficulty level</div>
+            <div class="difficulty-buttons">
+                <div>
+                    <button class="difficulty-btn btn-easy" onclick="startGame(8)">
+                        Easy
+                    </button>
+                    <div class="difficulty-info">8x8 Board</div>
+                </div>
+                <div>
+                    <button class="difficulty-btn btn-hard" onclick="startGame(10)">
+                        Hard
+                    </button>
+                    <div class="difficulty-info">10x10 Board</div>
                 </div>
             </div>
         </div>
-    </main>
 
-    <!-- Congrats Modal (Hidden by default) -->
-    <div id="congrats-modal-overlay" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Congratulations!</h2>
-            <p id="congrats-message">You found a perfect solution!</p>
-            <div class="modal-buttons">
-                <button id="modal-play-again" class="btn-secondary">Play Again</button>
-                <button id="modal-go-home" class="btn-primary">Go Home</button>
+        <!-- Game Screen -->
+        <div class="game-screen" id="game-screen">
+            <div class="header">
+                <h1 class="title">
+                    <i class="fas fa-arrow-left" style="font-size: 1.5rem; margin-right: 10px;"></i>
+                    Queens Puzzle — AI Solver (<span id="board-size-display">8</span>x<span id="board-size-display2">8</span>)
+                </h1>
+                <div></div>
+            </div>
+
+            <div class="main-content">
+                <!-- Game Board -->
+                <div class="board-container">
+                    <div id="game-board" class="board"></div>
+                    <p class="stats">Queens placed: <span id="queen-count">0</span>/<span id="board-size">8</span></p>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <!-- AI Solver -->
+                    <div class="control-box">
+                        <button class="btn btn-solve" id="solve-btn">
+                            Solve (AI)
+                        </button>
+                    </div>
+
+                    <!-- AI Hint -->
+                    <div class="control-box">
+                        <button class="btn btn-hint" id="hint-btn">
+                            Hint (AI)
+                        </button>
+                    </div>
+
+                    <!-- Manual Controls -->
+                    <div class="control-box">
+                        <button class="btn btn-undo" id="undo-btn" disabled>
+                            Undo
+                        </button>
+                    </div>
+
+                    <div class="control-box">
+                        <button class="btn btn-reset" id="reset-btn">
+                            Clear
+                        </button>
+                    </div>
+
+                    <div class="control-box">
+                        <button class="btn btn-new-game" id="new-game-btn" onclick="playAgain()">
+                            Random Puzzle
+                        </button>
+                    </div>
+
+                    <!-- Constraints -->
+                    <div class="control-box constraints-box">
+                        <h3 class="control-title">Constraints</h3>
+                        <ul class="rules-list">
+                            <li>• One queen per row</li>
+                            <li>• One queen per column</li>
+                            <li>• One queen per colored region</li>
+                            <li>• Queens cannot touch (including diagonally)</li>
+                        </ul>
+                    </div>
+
+                    <!-- AI Progress -->
+                    <div class="control-box progress-box">
+                        <h3 class="control-title">AI Progress</h3>
+                        <div class="progress-display" id="ai-progress">
+                            Ready to assist...
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- The JavaScript Glue -->
+    <!-- Congratulations Modal -->
+    <div class="congrats-modal" id="congrats-modal">
+        <div class="congrats-content">
+            <h2 class="congrats-title">Congratulations!</h2>
+            <p class="congrats-text">The AI found a solution!</p>
+            <div class="congrats-buttons">
+                <button class="congrats-btn btn-play-again" onclick="playAgain()">
+                    Play Again
+                </button>
+                <button class="congrats-btn btn-go-home" onclick="window.location.href='index.html'">
+                    Go Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
     <script src="queens_game.js"></script>
 </body>
 </html>
