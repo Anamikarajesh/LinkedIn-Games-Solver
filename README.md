@@ -118,3 +118,85 @@ Next steps / Improvements
 - Add unit tests or snapshot-based smoke tests for the generator and validity checks.
 
 
+# Tango — Sun & Moon (LinkedIn Game Solver)
+
+A fully interactive AI solver for the **Tango (Sun & Moon)** puzzle, built as part of the *LinkedIn Games Solver* team project.  
+Runs **entirely in the browser** using **Pyodide** to execute Python logic client-side.
+
+---
+
+##  Puzzle Rules
+
+Tango is played on a **6×6 grid**. Each cell contains either a:
+
+- ☀️ **Sun** → represented as `1`
+- 🌙 **Moon** → represented as `0`
+
+You must fill the grid obeying:
+
+### 1️ Adjacency Rule
+No 3 identical symbols can appear consecutively in any row or column.  
+(☀️☀️ is OK, ☀️☀️☀️ is not.)
+
+### 2️ Balance Rule
+Each row and each column contains **exactly three Suns and three Moons**.
+
+### Equality / Opposite Rules
+Some cell pairs have special relations:
+
+- `=` → both cells **must be the same**  
+- `×` → both cells **must be opposite**
+
+### Unique Solution
+Every generated puzzle has exactly **one** solution.
+
+---
+
+##  Features
+
+###  Interactive UI
+- Click a cell to place ☀️ or 🌙  
+- Prefilled cells are locked  
+- Invalid moves highlight in **red**
+
+###  Random Puzzle Generator
+- Each new puzzle generates:
+  - A **new solved grid**
+  - Random placement of `=` and `×` between adjacent cells
+  - A random set of visible starting cells
+
+###  Live Error Checking
+The UI instantly detects:
+- Triple adjacency violations  
+- More than 3 Suns/Moons in row/col  
+- Broken equal/opposite constraints  
+
+### AI Solver (Python via Pyodide)
+Uses a CSP-based solver implementing:
+- **Backtracking**
+- **MRV heuristic**
+- **Forward checking**
+  
+### AI Hint System
+Shows exactly **one correct next move**.
+
+### Step-by-Step Solve Animation
+AI fills each missing cell one by one with small delays.
+
+---
+
+##  Algorithms Used
+
+### Backtracking + MRV + Forward Checking
+The solver is a full CSP engine:
+
+- **Variables** → 36 cells  
+- **Domains** → {0, 1}  
+- **Constraints** → adjacency, balance, equal/opposite relations  
+
+The MRV heuristic chooses the next cell that has the smallest valid domain, dramatically improving search speed.
+
+---
+
+
+
