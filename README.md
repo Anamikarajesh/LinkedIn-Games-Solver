@@ -1,3 +1,55 @@
+# LinkedIn Games Solver
+
+## Table of Contents
+1. [Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)](#mini-sudoku--linkedin-games-solver-mini-sudoku)
+2. [N-Queens AI Solver](#n-queens-ai-solver)
+3. [Tango — Sun & Moon (LinkedIn Game Solver)](#tango--sun--moon-linkedin-game-solver)
+4. [Zip — LinkedIn Game Solver](#zip--linkedin-game-solver)
+
+# Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)
+
+A fully interactive 6×6 Sudoku variant with CSP instrumentation, hints, and a random puzzle generator. It is the entry point on the landing page and shares the same neon-dark look as the other LinkedIn mini-game solvers.
+
+---
+
+## Puzzle Rules
+- 6×6 grid using digits **1–6** in every row and column.
+- 3×2 sub-boxes (3 columns × 2 rows) must also contain the digits 1–6 exactly once.
+- Prefilled givens remain locked; free cells accept player input or solver assignments.
+- Invalid moves (duplicate in row/column/box) are immediately highlighted.
+
+## Features
+### Manual Play & UX
+- Click a cell and use the glassy number pad to enter digits; `Esc` or clicking outside clears the selection.
+- The `X` pad button quickly clears the active cell unless it is a given.
+- Locked givens, tentative entries, and invalid states all have distinct styles for quick scanning.
+
+### AI Assistance
+- **Hint (AI):** Runs the CSP generator until it finds the next credible assignment and fills exactly one cell.
+- **Solve (AI):** Streams the entire CSP search, filling the board once a solution is found and logging every event.
+- **New Game:** Generates a solvable random puzzle with 6–10 givens, validating each candidate with the silent solver.
+
+### Instrumented Progress Log
+- Every solver event (`enter`, `try`, `deadend`, `backtrack`, `solution`, `done`) is timestamped and pushed to both the on-page log and `localStorage` for later inspection.
+- Invalid manual moves also write to the log, making it easy to see why a number was rejected.
+
+## AI Solver & Generation
+- Uses backtracking with MRV (minimum remaining values) and lightweight forward checking for both validation and full solves.
+- A fast “is this grid still solvable?” check guards every manual move so players are warned before painting themselves into a corner.
+- The generator keeps sampling random givens until the silent solver certifies uniqueness/solvability.
+
+## How to Run
+1. Open `index.html` (Live Server or any static host).
+2. Click **Mini Sudoku** on the landing page.
+3. Play manually or click **Solve (AI)** to watch the instrumentation in action.
+
+## Future Enhancements
+- Add stronger propagation (LCV, AC-3) for even faster hints.
+- Visualize the search tree or variable ordering in a side panel.
+- Build smoke tests for puzzle generation and solvability checks.
+
+---
+
 # N-Queens AI Solver
 
 > This project is an interactive, browser-based game for solving the N-Queens problem. It was created as a component of the "LinkedIn Game Solver" team project.
@@ -50,10 +102,10 @@ This project uses two different families of AI algorithms to showcase different 
 * **Concept:** Simulated Annealing is a probabilistic local search algorithm inspired by the process of annealing in metallurgy. It's a "smart guesser."
 
 * **How it Works:**
-    1.  It starts with a random, invalid board.
-    2.  It "jiggles" a random queen to a new spot and calculates the number of conflicts (the "energy").
-    3.  If the new move is better (fewer conflicts), it's always accepted.
-    4.  If the new move is worse, it might still be accepted based on a probability. This "luck" allows it to escape bad starting positions (local minima) and find the true solution (global minimum).
+		1.  It starts with a random, invalid board.
+		2.  It "jiggles" a random queen to a new spot and calculates the number of conflicts (the "energy").
+		3.  If the new move is better (fewer conflicts), it's always accepted.
+		4.  If the new move is worse, it might still be accepted based on a probability. This "luck" allows it to escape bad starting positions (local minima) and find the true solution (global minimum).
 
 * **Our Implementation:** SA is very fast and lightweight, making it ideal for large N values in a browser. Its only weakness is that it's "unlucky" and can fail. We solved this by creating an auto-retry loop in JavaScript. When the user clicks "Solve," the `handleSolve()` function will call the Python solver up to 5 times until it gets a successful solution, making it feel robust to the user.
 
@@ -62,11 +114,11 @@ This project uses two different families of AI algorithms to showcase different 
 * **Concept:** Backtracking is a systematic, brute-force search algorithm. It is a classic "complete" solver, meaning it is guaranteed to find a solution if one exists.
 
 * **How it Works:**
-    1.  It takes the user's current board as its starting point.
-    2.  It finds the first empty column and tries to place a queen in the first row.
-    3.  It checks if this placement is "safe."
-    4.  If safe, it recursively moves to the next column.
-    5.  If not safe (or if a future step leads to a dead end), it *backtracks*, removes the queen, and tries the next row.
+		1.  It takes the user's current board as its starting point.
+		2.  It finds the first empty column and tries to place a queen in the first row.
+		3.  It checks if this placement is "safe."
+		4.  If safe, it recursively moves to the next column.
+		5.  If not safe (or if a future step leads to a dead end), it *backtracks*, removes the queen, and tries the next row.
 
 * **Our Implementation:** This is the perfect "smart hint" because it doesn't just give a random answer; it gives the first correct step of a real solution based on the user's current progress.
 
@@ -88,35 +140,8 @@ No server is needed! This project runs 100% in the browser.
 2.  Install a simple local server extension for your code editor (like **Live Server** for VS Code).
 3.  Right-click `index.html` and "Open with Live Server".
 4.  Click the link for the "N-Queens Solver".
-# Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)
 
-This is a small static web app that implements a 6x6 (mini) Sudoku solver with CSP instrumentation. It is intended as the first of several LinkedIn game solvers (mini-sudoku, queens, tango, zip).
-
-Features:
-- Punchy dark UI with hoverable game cards and glassy in-grid styling.
-- Manual play: click a cell, use the number pad to fill; givens stay locked and invalid entries highlight in red.
-- Hint (AI): runs the CSP search until it finds the next promising assignment and fills that cell.
-- Solve (AI): runs the solver to completion and fills the board with a solution (if found).
-- New Game: generates a random, solvable 6×6 puzzle with 6–10 givens.
-- AI Progress log: streams solver events (`enter`, `try`, `deadend`, `backtrack`, `solution`, `done`) with timestamps.
-
-How to use
-1. Open `index.html` in your browser (no server required).
-2. Choose **Mini Sudoku** from the landing page to load the solver.
-3. Click a cell to select it (press `Esc` or click outside the grid to deselect). Use the number pad to enter values; invalid moves flash red until corrected.
-4. Use the buttons: `Hint`, `Solve`, `Clear` (clears non-givens), `New Game`, and `X` on the pad to clear the active cell.
-
-Implementation notes
-- Solver: CSP backtracking with MRV (minimum remaining values) and simple forward-checking. A lightweight solvability check is used for user entries and new game generation.
-- The search yields events: `enter`, `try`, `deadend`, `backtrack`, `solution`, and `done`. Events are logged live and mirrored to `localStorage` for later inspection.
-- UI selection state clears automatically when clicking away or pressing `Esc`, and invalid flags are removed as soon as the cell is cleared or corrected.
-
-Next steps / Improvements
-- Add a more robust LCV heuristic and constraint propagation (AC-3) for performance.
-- Add a visual tree explorer showing the current path in the search tree.
-- Flesh out the Queens, Tango, and Zip solvers referenced on the landing page.
-- Add unit tests or snapshot-based smoke tests for the generator and validity checks.
-
+---
 
 # Tango — Sun & Moon (LinkedIn Game Solver)
 
@@ -161,9 +186,9 @@ Every generated puzzle has exactly **one** solution.
 
 ###  Random Puzzle Generator
 - Each new puzzle generates:
-  - A **new solved grid**
-  - Random placement of `=` and `×` between adjacent cells
-  - A random set of visible starting cells
+	- A **new solved grid**
+	- Random placement of `=` and `×` between adjacent cells
+	- A random set of visible starting cells
 
 ###  Live Error Checking
 The UI instantly detects:
@@ -195,6 +220,47 @@ The solver is a full CSP engine:
 - **Constraints** → adjacency, balance, equal/opposite relations  
 
 The MRV heuristic chooses the next cell that has the smallest valid domain, dramatically improving search speed.
+
+---
+
+
+
+# Zip — LinkedIn Game Solver
+
+A path-finding “number snake” puzzle inspired by LinkedIn’s Zip daily challenge. Players connect all numbered cells in order while the JavaScript solver cross-checks every move and can complete the board automatically.
+
+---
+
+## Puzzle Rules
+- Grid defaults to 6×6, but the layout utility can scale dimensions when needed.
+- Numbers (1…N) must be connected **in order** using orthogonal moves only.
+- The path must visit **every tile exactly once**; no revisiting or diagonal shortcuts.
+- Certain puzzles include down/right walls that block movement, plus pre-set numbers that must stay in place.
+
+## Features
+### Intuitive Input
+- Click to cycle numbers, drag from “1” to sketch a path, or press Backspace to clear the current selection.
+- Demo puzzles can be loaded instantly; givens are locked to prevent accidental edits until the board is cleared.
+
+### Guided Controls
+- `Auto Solve` finds a full Hamiltonian path in milliseconds using the ZipGrid search engine.
+- `Solve (Animated)` replays the solver’s path step-by-step, highlighting each move and logging milestones.
+- `Undo Move`, `Load Demo`, and `Clear All` keep experimentation safe.
+
+### Visual Feedback
+- Cells flip between highlighted, connected, visited, or given states so players can see where the snake has been.
+- A scrolling console mirrors every action (drag started, connection removed, solver progress, success/failure).
+
+## Algorithms & Implementation
+- The `ZipGrid` class in `zip.js` encodes degrees, walls, and labels using bit masks so moves can be validated in constant time.
+- A depth-first search stacks candidate moves (up/down/left/right) and prunes anything that would isolate the tail or break the degree constraints.
+- Heuristics such as degree decrementing, isolation checks, and label ordering dramatically reduce backtracking.
+- Results can be compressed into a sequence for animation using the included `compressSequence` helper.
+
+## How to Run
+1. Open `zip.html` (or launch `index.html` and select **Zip**).
+2. Draw a path manually or load a demo puzzle.
+3. Click **Auto Solve** or **Solve (Animated)** to watch the pathfinder complete the puzzle.
 
 ---
 
