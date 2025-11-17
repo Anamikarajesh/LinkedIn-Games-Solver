@@ -2,7 +2,7 @@
 
 ## Table of Contents
 1. [Mini Sudoku — LinkedIn Games Solver (Mini Sudoku)](#mini-sudoku--linkedin-games-solver-mini-sudoku)
-2. [N-Queens AI Solver](#n-queens-ai-solver)
+2. [Queens AI Solver](#queens-ai-solver)
 3. [Tango — Sun & Moon (LinkedIn Game Solver)](#tango--sun--moon-linkedin-game-solver)
 4. [Zip — LinkedIn Game Solver](#zip--linkedin-game-solver)
 
@@ -50,98 +50,119 @@ A fully interactive 6×6 Sudoku variant with CSP instrumentation, hints, and a r
 
 ---
 
-# N-Queens AI Solver
+# Queens AI Solver
 
-> This project is an interactive, browser-based game for solving the N-Queens problem. It was created as a component of the "LinkedIn Game Solver" team project.
+> This project is an interactive, browser-based logic game for the "Queens Puzzle". It was created as an AI project, featuring a complete Constraint Satisfaction Problem (CSP) solver.
 
-The application runs entirely in the browser, using **Pyodide** to load a Python backend for its AI logic. This allows for a serverless architecture that's easy to run and test.
+The application runs entirely in the browser, using **Pyodide** to load a Python backend for its advanced AI logic. This allows for a serverless architecture that runs a powerful AI solver directly on the client's machine.
 
----
+##  Features
 
-##  Features
+###  Interactive UI & Gameplay
 
-* **Fully Interactive UI:** Users can play the game themselves by clicking to place and remove queens.
-* **Dynamic Board:** The chessboard and queen icons are fully responsive and resize perfectly based on the N-value.
-* **Real-time Conflict Highlighting:** When a user places a queen that conflicts with another, both queens are immediately highlighted in red, and the user is notified.
-* **Conflict Lock:** To enforce the rules, the game prevents the user from placing new queens while a conflict exists on the board.
-* **Undo Move:** A dedicated "Undo" button allows the user to take back their last move, whether it was placing a queen, removing one, or receiving an AI hint.
-* **AI Solver:** A "Solve (AI)" button that uses a **Simulated Annealing** algorithm to find a complete solution.
-* **Smart AI Hint:** A "Hint (AI)" button that uses a **Backtracking** algorithm to analyze the user's current board and suggest a single valid next move.
-* **Robust Solver Logic:** The "Solve (AI)" button automatically retries the algorithm multiple times to ensure a solution is found, hiding the "unlucky" attempts from the user.
-* **AI Progress Log:** A panel that displays the real-time status of the AI, including which algorithm is running, its attempts, and any successes or errors.
-* **Congratulations Modal:** A pop-up appears when the user or the AI successfully solves the puzzle. It appears after a 1-second delay so the user can see the final board state.
+* **Dynamic Board:** The game board and UI elements are responsive, supporting both 8x8 (Easy) and 10x10 (Hard) modes.
 
----
+* **Vibrant Neon Aesthetic:** Features a dark mode UI (`#2d2d4a`) with glowing neon-colored regions and animated, glowing queens.
 
-##  Screenshots
+* **Real-time Validation:** The game instantly highlights invalid moves. If a user places a queen that conflicts with another, the cell flashes red, and the move is blocked until undone.
 
+* **Manual Solver Mode:** Users can play the game themselves by clicking to place and remove queens.
 
+* **Undo/Clear:** Full "Undo" support (using a move stack) and a "Clear" button allow for easy experimentation.
 
-A screenshot of the main game board and controls
-<img width="1878" height="944" alt="image" src="https://github.com/user-attachments/assets/efecdb77-00d9-46d8-911c-e242a8d8c618" />
+* **Congratulations Modal:** A pop-up appears (with a 10-second delay) when the user successfully solves the puzzle.
 
+###  AI-Powered Assistance
 
-A screenshot showing the red conflict highlighting and the warning bar
-<img width="1897" height="934" alt="image" src="https://github.com/user-attachments/assets/bc0b9139-9307-484b-bbd3-824cec3934fe" />
+* **Advanced AI Solver:** A "Solve (AI)" button that uses the full CSP solver to find a complete solution from any state.
 
-A screenshot showing the congratulations pop-up over a solved board
-<img width="1918" height="944" alt="image" src="https://github.com/user-attachments/assets/0a354e54-a030-408a-be31-c0dc790503e2" />
+* **Intelligent AI Hint:** A "Hint (AI)" button that analyzes the user's current board and suggests a single, optimal, valid next move.
 
-Ai progress display
-<img width="834" height="836" alt="image" src="https://github.com/user-attachments/assets/6e31f81d-897b-4f5f-bd9a-b7acfbfcdcf4" />
+* **Random Puzzle Generator:** A "Random Puzzle" button that loads a new, pre-vetted, solvable puzzle for the current difficulty.
 
+* **AI Progress Log:** A dedicated panel displays the real-time status of the AI, including loading messages, hint calculations, and solver status.
 
----
+##  Puzzle Rules
 
-##  AI Concepts & Algorithms Used
+This is a modern logic puzzle, distinct from the classic N-Queens problem.
 
-This project uses two different families of AI algorithms to showcase different approaches to solving a Constraint Satisfaction Problem (CSP).
+1. **Row Constraint:** Exactly one queen per row.
 
-### Solve (AI): Simulated Annealing (SA)
+2. **Column Constraint:** Exactly one queen per column.
 
-* **Concept:** Simulated Annealing is a probabilistic local search algorithm inspired by the process of annealing in metallurgy. It's a "smart guesser."
+3. **Region Constraint:** Exactly one queen per colored region.
 
-* **How it Works:**
-		1.  It starts with a random, invalid board.
-		2.  It "jiggles" a random queen to a new spot and calculates the number of conflicts (the "energy").
-		3.  If the new move is better (fewer conflicts), it's always accepted.
-		4.  If the new move is worse, it might still be accepted based on a probability. This "luck" allows it to escape bad starting positions (local minima) and find the true solution (global minimum).
+4. **Adjacency Constraint:** Queens cannot touch in any direction, including diagonally (i.e., they cannot be in adjacent squares).
 
-* **Our Implementation:** SA is very fast and lightweight, making it ideal for large N values in a browser. Its only weakness is that it's "unlucky" and can fail. We solved this by creating an auto-retry loop in JavaScript. When the user clicks "Solve," the `handleSolve()` function will call the Python solver up to 5 times until it gets a successful solution, making it feel robust to the user.
+**Difficulty Selection Screen**
 
-### Hint (AI): Backtracking
+**Main Game Interface (8x8)**
 
-* **Concept:** Backtracking is a systematic, brute-force search algorithm. It is a classic "complete" solver, meaning it is guaranteed to find a solution if one exists.
+**Main Game Interface (10x10)**
 
-* **How it Works:**
-		1.  It takes the user's current board as its starting point.
-		2.  It finds the first empty column and tries to place a queen in the first row.
-		3.  It checks if this placement is "safe."
-		4.  If safe, it recursively moves to the next column.
-		5.  If not safe (or if a future step leads to a dead end), it *backtracks*, removes the queen, and tries the next row.
+**AI Progress Display**
 
-* **Our Implementation:** This is the perfect "smart hint" because it doesn't just give a random answer; it gives the first correct step of a real solution based on the user's current progress.
+##  AI Concepts & Algorithms Used
 
----
+This project uses an advanced **Constraint Satisfaction Problem (CSP)** solver to showcase modern AI problem-solving techniques. The simple "dumb" backtracking is replaced with an optimized, heuristic-driven search.
 
-##  Limitations
+### 1. Backtracking Search (The Engine)
 
-* **Hint AI Performance:** Backtracking has a time complexity of $O(N!)$, which is incredibly slow. To prevent the user's browser from freezing, the "Hint (AI)" button is automatically disabled for N > 14.
-* **Board Size Cap:** The board size is capped at N = 25. While the SA solver could theoretically handle larger N, drawing a 100x100 grid in a browser would be unusable and crash the page.
-* **Pyodide Load Time:** The Python runtime (Pyodide) can take a few seconds to load when the page is first opened. The UI buttons are disabled during this time to prevent errors.
+* **Concept:** The core of the solver is a systematic, recursive algorithm that explores the "search tree" of all possible queen placements.
 
----
+* **How it Works:** It tries to place a queen in a valid spot, then recursively calls itself to solve for the next variable (e.g., the next row). If it hits a "dead end" (a state from which no solution is possible), it **backtracks**, undoes the last move, and tries a different one.
 
-##  How to Run
+### 2. Forward Checking (The Inference)
 
-No server is needed! This project runs 100% in the browser.
+* **Concept:** This is a form of inference that makes the backtracking "smarter." Instead of finding out about a dead end 5 moves later, it looks ahead.
 
-1.  Make sure all files (`index.html`, `queens_game.html`, `queens_game.js`, `queens_solver.py`, etc.) are in the same folder.
-2.  Install a simple local server extension for your code editor (like **Live Server** for VS Code).
-3.  Right-click `index.html` and "Open with Live Server".
-4.  Click the link for the "N-Queens Solver".
+* **How it Works:** When the AI places a queen, it immediately propagates constraints. It checks all "unassigned" variables (e.t., future rows) to see if any of them have *zero* valid moves left. If placing a queen in row 2 makes it impossible to place a queen in row 7, the AI knows *immediately* that its move in row 2 was wrong and backtracks instantly, pruning a massive part of the search tree.
 
----
+### 3. Minimum Remaining Values (MRV) Heuristic
+
+* **Concept:** This is an intelligent heuristic for deciding *which* variable to try next. Instead of just going row-by-row, it asks: "What is the hardest part of the puzzle right now?"
+
+* **How it Works:** At each step, the AI scans all unassigned rows and counts their valid moves. It then chooses to solve the **most constrained row** (the one with the *fewest* remaining valid placements) first. This "fail-fast" strategy finds dead ends much more quickly and dramatically speeds up the solver.
+
+##  Limitations
+
+* **Pyodide Load Time:** The Python runtime (Pyodide) is loaded from a CDN and can take a few seconds on the first page load. The UI buttons are disabled during this time to prevent errors.
+
+* **Puzzle Generation:** True random puzzle *generation* is an extremely hard AI problem (even harder than solving). Randomly generated regions are almost always unsolvable. This project solves this by using a **Puzzle Bank** of pre-defined, solvable puzzles, which are loaded randomly when "Random Puzzle" is clicked.
+
+* **AI Speed:** While fast, the AI solver is still running in the browser. For extremely large or complex boards (e.g., > 12x12), the JavaScript-to-Python communication and solving time could become noticeable.
+
+##  How to Run
+
+This project runs 100% in the browser but **requires a local server** to load the Python file (`queens_solver.py`) due to browser security rules (`fetch` API).
+
+1. Make sure all three files (`queens_game.html`, `queens_game.js`, `queens_solver.py`) are in the same folder.
+
+2. Open a terminal or command prompt in that folder.
+
+3. Run a simple Python web server:
+
+   ```bash
+   # If you have Python 3
+   python3 -m http.server
+   
+   # If the command above doesn't work, try
+   python -m http.server
+   ```
+
+4. Open your web browser and go to: `http://localhost:8000/queens_game.html` (or `http://localhost:8000` and click the `queens_game.html` link).
+
+## File Structure
+
+```
+queens-puzzle/
+│
+├── queens_game.html      # Main HTML file (game interface, UI)
+├── queens_game.js        # JavaScript game logic (UI, event handlers, Pyodide bridge)
+└── queens_solver.py      # Python AI solver (Backtracking, CSP logic)
+```
+````
+
 
 # Tango — Sun & Moon (LinkedIn Game Solver)
 
