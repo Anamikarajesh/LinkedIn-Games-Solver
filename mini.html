@@ -47,6 +47,13 @@
   </div>
 
   <script src="app.js"></script>
-  
+  <!-- Success modal (used by app.js) -->
+  <div id="successModal" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:60;">
+    <div style="background:#0b1220; padding:20px; border-radius:12px; min-width:260px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+        <h2 style="margin:0 0 8px; color:white;">Puzzle Solved!</h2>
+        <p style="margin:0 0 12px; color:white;">Congratulations — the Sudoku is complete.</p>
+        <button id="closeSuccess" onclick="document.getElementById('successModal').style.display='none'" style="padding:8px 12px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer;">Close</button>
+    </div>
+  </div>
 </body>
 </html>

@@ -571,6 +571,13 @@
         const [r,c] = k.split(',').map(x=>parseInt(x,10));
         setCell(r,c,ev.assignment[k]);
       }
+      // popup when Sudoku is completed: show `#successModal` like Tango, fallback to alert
+      const successModal = document.getElementById('successModal');
+      if(successModal){
+        successModal.style.display = 'flex';
+      } else {
+        alert('Congratulations — the Sudoku is complete!');
+      }
     } else if(ev.type==='done'){
       appendLog(`SEARCH DONE nodes=${ev.nodesVisited}`);
     }
@@ -582,6 +589,12 @@
   hintBtn.addEventListener('click', ()=> giveHint());
   // Pause control removed from UI
   // (log is displayed inline dynamically)
+
+  // close handler for Tango-style modal if present
+  document.getElementById('closeSuccess')?.addEventListener('click', ()=>{
+    const m = document.getElementById('successModal');
+    if(m) m.style.display = 'none';
+  });
 
   // initial grid
   createGrid();
