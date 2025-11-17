@@ -66,6 +66,20 @@
     </footer>
   </div>
 
+  <!-- Success modal -->
+  <div id="successModal" style="position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,0.6); z-index:60;">
+    <div style="background:#0b1220; padding:20px; border-radius:12px; min-width:260px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+      <h2 style="margin:0 0 8px">🎉 Puzzle Solved!</h2>
+      <p style="margin:0 0 12px">You've completed the Tango puzzle correctly.</p>
+      <button id="closeSuccess" style="padding:8px 12px; border-radius:8px; background:#10b981; color:white; border:none; cursor:pointer;">Close</button>
+    </div>
+  </div>
+
+  <!-- Small loading overlay -->
+  <div id="loader" style="position:fixed; right:18px; bottom:18px; background:#0b1220; padding:8px 12px; border-radius:999px; box-shadow:0 6px 18px rgba(0,0,0,0.5); color:#cbd5e1; display:none; z-index:70;">
+    Loading engine...
+  </div>
+
   <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
   <script src="tango_sunmoon.js"></script>
 </body>
