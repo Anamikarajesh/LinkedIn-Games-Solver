@@ -314,7 +314,7 @@ function handleCellClick(row, col) {
             if (gameState.queens.length === gameState.boardSize) {
                 setTimeout(() => {
                     document.getElementById('congrats-modal').classList.add('show');
-                }, 1000);
+                }, 10000);
             }
         } else {
             // Invalid placement
@@ -450,7 +450,7 @@ json.dumps(result)
             setTimeout(() => {
                 document.getElementById('congrats-modal').classList.add('show');
                 updateAIProgress('Ready to assist...');
-            }, 1000);
+            }, 10000);
         } else {
             updateAIProgress('No solution found');
             setTimeout(() => updateAIProgress('Ready to assist...'), 2000);
